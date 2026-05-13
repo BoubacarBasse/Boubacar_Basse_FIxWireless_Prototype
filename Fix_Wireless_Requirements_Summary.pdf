@@ -1,0 +1,77 @@
+# Fix Wireless — Requirements Summary
+**Prepared by:** Boubacar Basse | **For:** ServiceCentral Assessment
+**Customer:** Fix Wireless (62 locations, 14 states) | **Source:** 38-min discovery call
+
+---
+
+## 1. Top 3 Pain Points — Ranked by Business Impact
+
+**#1 — Cross-Location Parts Inventory Visibility**
+Ranked first because Dana quantified it: *"We're probably losing $15,000–$20,000 a month in lost repairs because of inventory imbalances."* This is the only pain point with a dollar figure attached, making it the clearest ROI case. The Tampa/Orlando example — 200 screens sitting 90 minutes from a store turning customers away — is a concrete, repeatable failure that the API can surface today via `GET /parts/summary`.
+
+**#2 — Ticket Aging Dashboard**
+Ranked second because Marcus confirmed it would be used *every single day* by regional managers across all locations — not weekly like parts analysis. Daily operational tools drive adoption. Without adoption, nothing else matters. The API supports this natively via `GET /tickets/summary?group_by=location`.
+
+**#3 — Customer Notifications (SMS on Repair Completion)**
+Ranked third not because it's least important, but because **it already exists in RepairQ** — Marcus confirmed the feature is live under Notifications settings, per-store. Josh committed to enabling it for Sarah's stores this week. This is a configuration task, not a build. The prototype demonstrates the experience; no new API work required.
+
+---
+
+## 2. For Each Pain Point: Need, Who It Serves, and "Done"
+
+### Pain Point 1 — Parts Inventory Visibility
+**What the customer needs:** A single view showing stock status (out of stock / low / overstocked) across all 62 locations, surfacing imbalances by part and by location — not per-store exports.
+**Who it serves:** Dana (Director of Operations) — primary. All regional managers — secondary.
+**"Done" looks like:** Dana opens one screen and sees which parts are critical across the network without exporting a single CSV. Measurable: time spent on manual parts reporting drops from ~3 hours per session to under 5 minutes. Transfer orders are **Phase 2** — the API does not support them today.
+
+### Pain Point 2 — Ticket Aging Dashboard
+**What the customer needs:** Real-time view of open tickets bucketed by age: under 24h (green), 24–48h (amber), over 48h (red), sorted by worst locations first. **Must be mobile-friendly** — Marcus explicitly said he checks this from his car.
+**Who it serves:** Marcus (Regional Manager) and his regional manager team.
+**"Done" looks like:** Marcus opens the dashboard on his phone, sees every location's red ticket count without any clicks or exports. Measurable: response time to tickets over 48h improves because the problem is visible in real time instead of a Tuesday spreadsheet.
+
+### Pain Point 3 — Customer Notifications
+**What the customer needs:** Automated SMS sent to customers when repair status changes, ideally including an estimated completion time.
+**Who it serves:** Sarah (Franchise Owner, 3 locations) and all franchise owners who haven't enabled the existing feature.
+**"Done" looks like:** Customers stop calling to check repair status. Measurable: inbound "where's my phone" calls drop by ~20% (Dana's estimate), freeing counter staff. **Note:** Estimated completion time is not a field in the current API — the prototype shows the concept; the data field is a future ask for engineering.
+
+---
+
+## 3. Contradictions and Open Questions
+
+**Contradiction 1 — Priority disagreement is real, not just surface-level.**
+Dana says parts visibility saves the most money. Marcus says turnaround is the daily driver. Sarah wants notifications. All three are right for their role. The risk: if the prototype only solves one, two stakeholders leave the demo feeling unheard. **Resolution:** Build all three tabs; let each stakeholder see their problem addressed.
+
+**Contradiction 2 — Dana's SKU count is unreliable.**
+Dana estimated 400–500 SKUs; Marcus said closer to 300 for active parts. The API sandbox shows 312. This matters for performance decisions (pagination strategy) but not for the prototype. **Flag for engineering at handoff.**
+
+**Open Question 1 — Who owns the notification rollout?**
+Josh committed to enabling notifications for Sarah's stores "this week" but no owner or timeline was assigned beyond that. If this falls through, Sarah's trust in the engagement drops fast.
+
+**Open Question 2 — Looker integration scope.**
+Dana wants data to flow into their existing Looker instance. Marcus explicitly doesn't care. This is real infrastructure work — not a prototype deliverable — but it needs a scoping conversation before engineering handoff or Dana will feel her requirement was ignored.
+
+**Open Question 3 — Mobile-first or mobile-friendly?**
+Marcus said he's in his car half the day and won't use a laptop. That's a mobile-first use case, not just responsive design. The prototype should be tested on a phone screen, not just resized in a browser.
+
+---
+
+## 4. What We Would NOT Build (and Why)
+
+| What | Why Not |
+|------|---------|
+| **Transfer orders** | API explicitly does not support them. Josh confirmed. Phase 2. |
+| **Looker integration** | Infrastructure work requiring data pipeline design — not a prototype deliverable. Acknowledge it verbally; do not build it. |
+| **Multi-location SSO** | On ServiceCentral's roadmap per Josh. Not ours to solve in this engagement. |
+| **Estimated completion time field** | Field does not exist in the API schema. Show the concept in the notifications mockup; flag as a new field request for engineering. |
+| **Webhook / real-time push** | No webhook support in this API version. Dashboard uses polling on refresh instead. |
+| **Production-hardened code** | Assessment brief explicitly states "demo quality." A working demo that gets customer feedback is more valuable than polished code that ships late. |
+
+---
+
+## 5. Assumptions Made
+
+- **CORS will block sandbox API calls from the browser.** Prototype uses realistic mock data that mirrors the API spec exactly. Real API calls can be wired in a backend proxy at production stage.
+- **"Mobile-friendly" means responsive layout that works on a 390px screen** (iPhone standard). Not a native app.
+- **SOC2 requirement is satisfied** — Josh confirmed ServiceManager (the underlying infrastructure) is SOC2 certified. Noted; no action required in the prototype.
+- **The 62-location dataset is stable enough for demo purposes.** Sandbox resets nightly at 03:00 UTC — demo should not be run between midnight and 3am CT.
+- **Dana's $15–20K/month lost revenue estimate is directionally accurate.** Used as justification for priority ranking; not independently verified.
